@@ -12,11 +12,18 @@
     "prepare": "husky install"
   },
   "dependencies": {
+    "@siaikin/utils": "^1.2.0",
+    "@types/d3": "^7.4.3",
+    "@vueuse/core": "^10.7.0",
+    "d3": "^7.8.5",
+    "dayjs": "^1.11.10",
+    "octokit": "^3.1.2",
     "vite-plugin-vuetify": "^2.0.1",
     "vue": "^3.3.11",
-    "vuetify": "^3.4.7"
+    "vuetify": "^3.5.7"
   },
   "devDependencies": {
+    "@mdi/js": "^7.3.67",
     "@typescript-eslint/eslint-plugin": "^6.14.0",
     "@typescript-eslint/parser": "^6.14.0",
     "@vitejs/plugin-vue": "^4.5.2",
