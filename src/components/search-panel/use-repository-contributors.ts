@@ -11,6 +11,8 @@ export function useRepositoryContributors(
 ) {
   const url = 'GET /repos/{owner}/{repo}/contributors' as const;
 
+  const data = ref<Array<components['schemas']['contributor']>>([]);
+
   const paramsList = ref([]) as Ref<
     Array<
       [
@@ -20,10 +22,13 @@ export function useRepositoryContributors(
       ]
     >
   >;
+  const page = ref(1);
   const fetchContributors = () => {
     const ownerValue = toValue(owner);
     const repoValue = toValue(repo);
     if (!isString(ownerValue) || !isString(repoValue)) return;
+
+    const pageValue = toValue(page);
 
     paramsList.value = [
       [
@@ -32,9 +37,14 @@ export function useRepositoryContributors(
         {
           owner: ownerValue,
           repo: repoValue,
+          page: pageValue,
         },
       ],
     ];
+  };
+  const nextPage = () => {
+    page.value++;
+    fetchContributors();
   };
 
   const mapFn =
@@ -42,8 +52,11 @@ export function useRepositoryContributors(
       PaginatingEndpoints[typeof url]['response'],
       Array<components['schemas']['contributor']>
     > =>
-    (response) =>
-      response.data.map((repository) => repository);
+    (response, done) => {
+      done();
+      data.value = data.value.concat(response.data);
+      return response.data;
+    };
   const result = useOctokitPaginateMap<
     typeof url,
     Array<components['schemas']['contributor']>
@@ -51,7 +64,12 @@ export function useRepositoryContributors(
 
   return {
     ...result,
-    data: computed(() => result.data.value['contributors']),
-    fetch: fetchContributors,
+    data,
+    fetch: () => {
+      page.value = 1;
+      data.value = [];
+      fetchContributors();
+    },
+    next: () => nextPage(),
   };
 }

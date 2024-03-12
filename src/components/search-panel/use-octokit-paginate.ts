@@ -40,7 +40,7 @@ export function useOctokitPaginateMap<
           route,
           {
             ...parameters,
-            pre_page: 100,
+            per_page: 100,
             request: { signal: abortController.value.signal },
           },
           (response, done) => toValue(mapFn)(response, done)

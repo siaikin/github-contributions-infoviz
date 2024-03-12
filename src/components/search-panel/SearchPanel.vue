@@ -206,6 +206,7 @@
             multiple
             class="mb-2"
             @filter="filterFn"
+            @virtual-scroll="onScroll"
           >
             <template #prepend>
               <q-icon name="mdi-account-multiple-outline" />
@@ -362,6 +363,7 @@ import { presetDateRange } from 'components/search-panel/models';
 import { storeToRefs } from 'pinia';
 import { useRepositoryContributors } from 'components/search-panel/use-repository-contributors';
 import { components } from '@octokit/openapi-types';
+import { QSelect } from 'quasar';
 
 const commitsStore = useCommitStore();
 const { searchParams } = storeToRefs(commitsStore);
@@ -495,6 +497,39 @@ function filterFn(val: string, doneFn: () => void, abort: () => void) {
       );
   }
   doneFn();
+}
+
+async function onScroll({
+  to,
+  ref,
+}: {
+  /**
+   * Index of the list item that was scrolled into view (0 based)
+   */
+  index: number;
+  /**
+   * The index of the first list item that is rendered (0 based)
+   */
+  from: number;
+  /**
+   * The index of the last list item that is rendered (0 based)
+   */
+  to: number;
+  /**
+   * Direction of change
+   */
+  direction: 'increase' | 'decrease';
+  /**
+   * Vue reference to the QSelect
+   */
+  ref: QSelect;
+}) {
+  const lastIndex = repositoryContributorFilterOptions.value.length - 1;
+
+  if (repositoryContributor.loading.value !== true && to === lastIndex) {
+    repositoryContributor.next();
+    ref.refresh();
+  }
 }
 </script>
 
