@@ -159,11 +159,10 @@ const contributors = computed({
   set: (value: Array<Contributor>) => emits('update:contributors', value),
 });
 
-const { fetch, total, fetchingPart, data, loading, percentage } =
-  useRepositoryContributors(
-    computed(() => repository.value.owner.login),
-    computed(() => repository.value.name)
-  );
+const { fetch, total, data, loading } = useRepositoryContributors(
+  computed(() => repository.value.owner.login),
+  computed(() => repository.value.name)
+);
 
 const formData = reactive(cloneDeep(toRaw(contributorSearchParams.value)));
 watchDebounced(

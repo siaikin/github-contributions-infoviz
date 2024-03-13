@@ -283,21 +283,21 @@
             <template v-slot:loading>
               <div class="flex flex-nowrap w-full p-1 gap-1 items-center">
                 <q-spinner-hourglass />
-                Fetching
                 <q-avatar size="sm">
                   <img
                     :src="
-                      formData.contributors[commits.fetchingPart.value]
+                      formData.contributors[commits.fetchedPart.value]
                         .avatar_url
                     "
                     :alt="
-                      formData.contributors[commits.fetchingPart.value].login
+                      formData.contributors[commits.fetchedPart.value].login
                     "
                   />
                 </q-avatar>
                 <span class="truncate">
-                  {{ formData.contributors[commits.fetchingPart.value].login }}
+                  {{ formData.contributors[commits.fetchedPart.value].login }}
                 </span>
+                Fetched
                 <q-space />
                 <span>{{ commits.percentage.value }}%</span>
               </div>

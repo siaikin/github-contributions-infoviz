@@ -108,19 +108,19 @@ export function useGitCommit(
     mapFn
   );
   const loadingText = computed(() => {
-    const fetchingIndex = pagination.fetchingPart.value;
+    const fetchedIndex = pagination.fetchedPart.value;
     const paramsListValue = paramsList.value;
-    if (fetchingIndex >= paramsListValue.length) return 'Done';
+    if (fetchedIndex >= paramsListValue.length) return 'Done';
 
     const tabValue = toValue(tab);
-    const [key] = paramsListValue[fetchingIndex];
+    const [key] = paramsListValue[fetchedIndex];
     switch (tabValue) {
       case 'branch':
-        return `Fetching branch ${key.length <= 0 ? 'default' : key}`;
+        return `Branch ${key.length <= 0 ? 'default' : key} Fetched`;
       case 'contributor':
-        return `Fetching contributor ${key}`;
+        return `Contributor ${key} Fetched`;
       case 'collaborator':
-        return `Fetching collaborator ${key}`;
+        return `Collaborator ${key} Fetched`;
       default:
         return 'Loading';
     }

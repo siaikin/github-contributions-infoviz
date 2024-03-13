@@ -16,7 +16,7 @@ export function useOctokitPaginateMap<
 ) {
   const loading = ref(false);
   const percentage = ref(0);
-  const fetchingPart = ref(0);
+  const fetchedPart = ref(0);
   const data = ref({}) as Ref<Record<string, M>>;
 
   const abortController = ref(new AbortController());
@@ -35,7 +35,6 @@ export function useOctokitPaginateMap<
       const paramsValue = toValue(params);
       let completeCount = 0;
       for (let i = 0; i < paramsValue.length; i++) {
-        fetchingPart.value = i;
         const [key, route, parameters] = paramsValue[i];
         const promise = getOctokit()
           .paginate<R, M>(
@@ -53,6 +52,7 @@ export function useOctokitPaginateMap<
             percentage.value = Math.floor(
               (completeCount / paramsValue.length) * 100
             );
+            fetchedPart.value = i;
           });
 
         promises.push(promise);
@@ -61,7 +61,7 @@ export function useOctokitPaginateMap<
       await Promise.all(promises);
 
       data.value = resultMap;
-      fetchingPart.value = paramsValue.length;
+      fetchedPart.value = paramsValue.length;
       percentage.value = 100;
     } finally {
       loading.value = false;
@@ -70,7 +70,7 @@ export function useOctokitPaginateMap<
 
   return {
     loading,
-    fetchingPart,
+    fetchedPart,
     data,
     percentage,
   };
