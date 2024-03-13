@@ -4,12 +4,18 @@ import type { PaginatingEndpoints } from '@octokit/plugin-paginate-rest/dist-typ
 import { MapFunction } from '@octokit/plugin-paginate-rest/dist-types/types';
 import { components } from '@octokit/openapi-types/types';
 import { isString } from 'lodash-es';
+import { parseLinkHeader } from 'src/http-interfaces/parse-link-header';
+import { until } from '@vueuse/core';
 
 export function useRepositoryContributors(
   owner: MaybeRefOrGetter<string | undefined>,
   repo: MaybeRefOrGetter<string | undefined>
 ) {
   const url = 'GET /repos/{owner}/{repo}/contributors' as const;
+
+  const total = ref(0);
+  const expectedCount = ref(0);
+  const remainedCount = ref(0);
 
   const paramsList = ref([]) as Ref<
     Array<
@@ -20,11 +26,13 @@ export function useRepositoryContributors(
       ]
     >
   >;
-  const fetchContributors = () => {
+  const fetchContributors = async (expected: number) => {
     const ownerValue = toValue(owner);
     const repoValue = toValue(repo);
     if (!isString(ownerValue) || !isString(repoValue)) return;
 
+    expectedCount.value = expected;
+    remainedCount.value = expected;
     paramsList.value = [
       [
         'contributors',
@@ -35,6 +43,8 @@ export function useRepositoryContributors(
         },
       ],
     ];
+
+    await until(result.loading).toBe(true);
   };
 
   const mapFn =
@@ -42,8 +52,19 @@ export function useRepositoryContributors(
       PaginatingEndpoints[typeof url]['response'],
       Array<components['schemas']['contributor']>
     > =>
-    (response) =>
-      response.data.map((repository) => repository);
+    (response, done) => {
+      const linkMap = parseLinkHeader(response.headers.link);
+      total.value = Math.max(
+        total.value,
+        Number.parseInt(linkMap?.last?.page ?? '0') *
+          Number.parseInt(linkMap?.last?.per_page ?? '0') || 0
+      );
+
+      remainedCount.value -= response.data.length;
+      if (remainedCount.value <= 0) done();
+
+      return response.data;
+    };
   const result = useOctokitPaginateMap<
     typeof url,
     Array<components['schemas']['contributor']>
@@ -51,7 +72,10 @@ export function useRepositoryContributors(
 
   return {
     ...result,
-    data: computed(() => result.data.value['contributors']),
-    fetch: fetchContributors,
+    data: computed(() =>
+      (result.data.value['contributors'] ?? []).slice(0, expectedCount.value)
+    ),
+    total,
+    fetch: (expected: number = Number.MAX_VALUE) => fetchContributors(expected),
   };
 }
