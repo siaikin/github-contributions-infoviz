@@ -30,22 +30,35 @@ export function useOctokitPaginateMap<
 
     try {
       const resultMap: Record<string, M> = {};
+      const promises: Array<Promise<void>> = [];
 
       const paramsValue = toValue(params);
+      let completeCount = 0;
       for (let i = 0; i < paramsValue.length; i++) {
         fetchingPart.value = i;
-        percentage.value = Math.floor(((i + 1) / paramsValue.length) * 100);
         const [key, route, parameters] = paramsValue[i];
-        resultMap[key] = await getOctokit().paginate<R, M>(
-          route,
-          {
-            ...parameters,
-            per_page: 100,
-            request: { signal: abortController.value.signal },
-          },
-          (response, done) => toValue(mapFn)(response, done)
-        );
+        const promise = getOctokit()
+          .paginate<R, M>(
+            route,
+            {
+              ...parameters,
+              per_page: 100,
+              request: { signal: abortController.value.signal },
+            },
+            (response, done) => toValue(mapFn)(response, done)
+          )
+          .then((res) => {
+            resultMap[key] = res;
+            completeCount++;
+            percentage.value = Math.floor(
+              (completeCount / paramsValue.length) * 100
+            );
+          });
+
+        promises.push(promise);
       }
+
+      await Promise.all(promises);
 
       data.value = resultMap;
       fetchingPart.value = paramsValue.length;
