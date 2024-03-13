@@ -9,12 +9,14 @@
         v-model="formData.repository"
         use-input
         clearable
+        square
         input-debounce="250"
-        label="Repository"
+        label="Search Repository"
         :options="repositories.data.value"
         :loading="repositories.loading.value"
         @filter="handleRepositoryFetch"
         class="mb-2"
+        bottom-slots
       >
         <template #prepend>
           <q-icon name="mdi-source-repository" />
@@ -46,9 +48,12 @@
             </span>
           </q-chip>
         </template>
+        <template #hint>
+          Search and select a GitHub repository you want to analyze.
+        </template>
       </q-select>
 
-      <div class="text-xs pl-2 pr-2 mb-2">
+      <div class="text-xs pl-2 pr-2 mt-4 mb-2">
         See "<a
           href="http://docs.github.com/articles/searching-for-repositories/"
           target="_blank"
@@ -56,53 +61,58 @@
         >" for a detailed list of qualifiers.
       </div>
 
-      <div class="mb-2">
-        <q-input label="Time range" filled :model-value="formData.dateRange">
-          <template #append>
-            <q-btn icon="event" round color="primary">
-              <q-popup-proxy cover>
-                <q-date
-                  :model-value="{
-                    from: formData.dateRange?.[0],
-                    to: formData.dateRange?.[1],
-                  }"
-                  @update:model-value="handleDateRangeChange"
-                  range
-                  landscape
-                  mask="YYYY-MM-DD"
-                >
-                  <q-chip
-                    dense
-                    size="sm"
-                    :disable="!repositorySelected"
-                    v-for="item in presetDateRange"
-                    :key="item.label"
-                    :selected="
-                      formData.dateRange[0] === item.value[0] &&
-                      formData.dateRange[1] === item.value[1]
-                    "
-                    @update:selected="
-                      handleDateRangeChange({
-                        from: item.value[0],
-                        to: item.value[1],
-                      })
-                    "
-                  >
-                    {{ item.label }}
-                  </q-chip>
-                  <div class="row items-center justify-end">
-                    <q-btn v-close-popup label="Close" color="primary" flat />
-                  </div>
-                </q-date>
-              </q-popup-proxy>
-            </q-btn>
-          </template>
-        </q-input>
-      </div>
-
-      <q-separator />
-
       <template v-if="formData.repository">
+        <div class="mb-2">
+          <q-input
+            label="Time range"
+            square
+            filled
+            :model-value="formData.dateRange"
+          >
+            <template #append>
+              <q-btn icon="event" round color="primary">
+                <q-popup-proxy cover>
+                  <q-date
+                    :model-value="{
+                      from: formData.dateRange?.[0],
+                      to: formData.dateRange?.[1],
+                    }"
+                    @update:model-value="handleDateRangeChange"
+                    range
+                    landscape
+                    mask="YYYY-MM-DD"
+                  >
+                    <q-chip
+                      dense
+                      size="sm"
+                      :disable="!repositorySelected"
+                      v-for="item in presetDateRange"
+                      :key="item.label"
+                      :selected="
+                        formData.dateRange[0] === item.value[0] &&
+                        formData.dateRange[1] === item.value[1]
+                      "
+                      @update:selected="
+                        handleDateRangeChange({
+                          from: item.value[0],
+                          to: item.value[1],
+                        })
+                      "
+                    >
+                      {{ item.label }}
+                    </q-chip>
+                    <div class="row items-center justify-end">
+                      <q-btn v-close-popup label="Close" color="primary" flat />
+                    </div>
+                  </q-date>
+                </q-popup-proxy>
+              </q-btn>
+            </template>
+          </q-input>
+        </div>
+
+        <q-separator />
+
         <q-tabs
           v-model="formData.tab"
           inline-label
@@ -257,41 +267,44 @@
             </q-select>
           </q-tab-panel>
         </q-tab-panels>
-      </template>
 
-      <div class="sticky bottom-0">
-        <q-btn
-          class="w-full"
-          :disable="!repositorySelected"
-          square
-          label="OK"
-          type="submit"
-          color="primary"
-          :loading="commits.loading.value"
-          :percentage="commits.percentage.value"
-          :no-caps="true"
-        >
-          <template v-slot:loading>
-            <div class="flex flex-nowrap w-full p-1 gap-1 items-center">
-              <q-spinner-hourglass />
-              Fetching
-              <q-avatar size="sm">
-                <img
-                  :src="
-                    formData.contributors[commits.fetchingPart.value].avatar_url
-                  "
-                  :alt="formData.contributors[commits.fetchingPart.value].login"
-                />
-              </q-avatar>
-              <span class="truncate">
-                {{ formData.contributors[commits.fetchingPart.value].login }}
-              </span>
-              <q-space />
-              <span>{{ commits.percentage.value }}%</span>
-            </div>
-          </template>
-        </q-btn>
-      </div>
+        <div class="sticky bottom-0">
+          <q-btn
+            class="w-full"
+            :disable="!repositorySelected"
+            square
+            label="OK"
+            type="submit"
+            color="primary"
+            :loading="commits.loading.value"
+            :percentage="commits.percentage.value"
+            :no-caps="true"
+          >
+            <template v-slot:loading>
+              <div class="flex flex-nowrap w-full p-1 gap-1 items-center">
+                <q-spinner-hourglass />
+                Fetching
+                <q-avatar size="sm">
+                  <img
+                    :src="
+                      formData.contributors[commits.fetchingPart.value]
+                        .avatar_url
+                    "
+                    :alt="
+                      formData.contributors[commits.fetchingPart.value].login
+                    "
+                  />
+                </q-avatar>
+                <span class="truncate">
+                  {{ formData.contributors[commits.fetchingPart.value].login }}
+                </span>
+                <q-space />
+                <span>{{ commits.percentage.value }}%</span>
+              </div>
+            </template>
+          </q-btn>
+        </div>
+      </template>
     </q-form>
 
     <div class="flex-none w-full">

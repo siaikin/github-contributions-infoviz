@@ -1,25 +1,38 @@
 <template>
   <q-page :style-fn="handlePageHeight">
-    <div
+    <q-splitter
       v-if="authorized"
-      class="fit row wrap justify-start items-start content-start"
+      :horizontal="$q.screen.lt.sm"
+      class="h-full"
+      v-model="splitterModel"
     >
-      <div class="h-full overflow-auto w-sm">
+      <template #before>
         <SearchPanel />
-      </div>
-      <q-separator vertical />
-      <div class="flex-auto overflow-hidden relative h-full">
-        <template v-if="repositorySelected">
-          <CommitChart />
-        </template>
-        <template v-else>
-          <div class="flex flex-col justify-center items-center h-full">
-            <q-icon name="mdi-source-repository" size="lg" color="gray" />
-            <p class="text-xl">Select a repository</p>
-          </div>
-        </template>
-      </div>
-    </div>
+      </template>
+      <template #separator>
+        <q-btn
+          class="cursor-grab"
+          round
+          color="primary"
+          size="sm"
+          icon="mdi-drag-vertical"
+        >
+        </q-btn>
+      </template>
+      <template #after>
+        <div class="flex-auto overflow-hidden relative h-full">
+          <template v-if="repositorySelected">
+            <CommitChart />
+          </template>
+          <template v-else>
+            <div class="flex flex-col justify-center items-center h-full">
+              <q-icon name="mdi-source-repository" size="lg" color="gray" />
+              <p class="text-xl">Select a repository</p>
+            </div>
+          </template>
+        </div>
+      </template>
+    </q-splitter>
   </q-page>
 </template>
 
@@ -105,4 +118,6 @@ if (!authorized.value) {
     component: LoginDialog,
   });
 }
+
+const splitterModel = ref(20);
 </script>
