@@ -8,6 +8,7 @@
         filled
         v-model="formData.repository"
         use-input
+        clearable
         input-debounce="250"
         label="Repository"
         :options="repositories.data.value"
@@ -35,15 +36,8 @@
             </q-item-section>
           </q-item>
         </template>
-        <template
-          v-slot:selected-item="{ removeAtIndex, index, tabindex, opt }"
-        >
-          <q-chip
-            removable
-            dense
-            @remove="removeAtIndex(index)"
-            :tabindex="tabindex"
-          >
+        <template v-slot:selected-item="{ tabindex, opt }">
+          <q-chip dense :tabindex="tabindex">
             <q-avatar color="secondary" text-color="white">
               <img :src="opt.owner.avatar_url" :alt="opt.owner.login" />
             </q-avatar>
@@ -108,207 +102,162 @@
 
       <q-separator />
 
-      <q-tabs v-model="formData.tab" inline-label outside-arrows mobile-arrows>
-        <!--        <q-tab :disable="!repositorySelected" name="branch" label="branch" />-->
-        <!--        <q-tab :disable="!repositorySelected" name="tag" label="tag" />-->
-        <q-tab
-          :disable="!repositorySelected"
-          name="contributor"
-          label="contributor"
-        />
-        <!--        <q-tab-->
-        <!--          :disable="!repositorySelected"-->
-        <!--          name="collaborator"-->
-        <!--          label="collaborator"-->
-        <!--        />-->
-      </q-tabs>
-
-      <q-separator />
-
-      <q-tab-panels v-model="formData.tab" animated>
-        <q-tab-panel name="branch">
-          <q-select
-            dense
+      <template v-if="formData.repository">
+        <q-tabs
+          v-model="formData.tab"
+          inline-label
+          outside-arrows
+          mobile-arrows
+        >
+          <!--        <q-tab :disable="!repositorySelected" name="branch" label="branch" />-->
+          <!--        <q-tab :disable="!repositorySelected" name="tag" label="tag" />-->
+          <q-tab
             :disable="!repositorySelected"
-            filled
-            v-model="formData.branches"
-            use-input
-            :clearable="true"
-            input-debounce="250"
-            label="Branches"
-            :options="gitBranch.branches"
-            :loading="gitBranch.loading"
-            option-label="ref"
-            option-value="ref"
-            use-chips
-            multiple
-            placeholder="default: repository's default branch"
-            class="mb-2"
-          >
-            <template #prepend>
-              <q-icon name="mdi-source-branch" />
-            </template>
-            <template v-slot:no-option>
-              <q-item>
-                <q-item-section class="text-grey"> No results </q-item-section>
-              </q-item>
-            </template>
-          </q-select>
-        </q-tab-panel>
+            name="contributor"
+            label="Group by contributor"
+            no-caps
+          />
+          <!--        <q-tab-->
+          <!--          :disable="!repositorySelected"-->
+          <!--          name="collaborator"-->
+          <!--          label="collaborator"-->
+          <!--        />-->
+        </q-tabs>
 
-        <q-tab-panel name="tag">
-          <q-select
-            dense
-            :disable="!repositorySelected"
-            filled
-            v-model="formData.tags"
-            use-input
-            :clearable="true"
-            input-debounce="250"
-            label="Tags"
-            :options="gitTag.tags"
-            :loading="gitTag.loading"
-            option-label="ref"
-            option-value="ref"
-            use-chips
-            multiple
-            placeholder="default: repository's default branch"
-            class="mb-2"
-          >
-            <template #prepend>
-              <q-icon name="mdi-source-tag" />
-            </template>
-            <template v-slot:no-option>
-              <q-item>
-                <q-item-section class="text-grey"> No tags </q-item-section>
-              </q-item>
-            </template>
-          </q-select>
-        </q-tab-panel>
+        <q-separator />
 
-        <q-tab-panel name="contributor">
-          <q-select
-            dense
-            :disable="
-              !repositorySelected || repositoryContributor.loading.value
-            "
-            filled
-            v-model="formData.contributors"
-            use-input
-            :clearable="true"
-            input-debounce="250"
-            label="Contributors"
-            :options="repositoryContributorFilterOptions"
-            :loading="repositoryContributor.loading.value"
-            option-label="login"
-            option-value="login"
-            use-chips
-            multiple
-            class="mb-2"
-            @filter="filterFn"
-            @virtual-scroll="onScroll"
-          >
-            <template #prepend>
-              <q-icon name="mdi-account-multiple-outline" />
-            </template>
-            <template v-slot:no-option>
-              <q-item>
-                <q-item-section class="text-grey">
-                  No contributors
-                </q-item-section>
-              </q-item>
-            </template>
-            <template v-slot:option="{ itemProps, opt }">
-              <q-item v-bind="itemProps">
-                <q-item-section>
-                  <q-item-label class="ellipsis">{{ opt.login }}</q-item-label>
-                </q-item-section>
-                <q-item-section avatar>
-                  <q-avatar>
+        <q-tab-panels v-model="formData.tab" animated>
+          <q-tab-panel name="branch">
+            <q-select
+              dense
+              :disable="!repositorySelected"
+              filled
+              v-model="formData.branches"
+              use-input
+              :clearable="true"
+              input-debounce="250"
+              label="Branches"
+              :options="gitBranch.branches"
+              :loading="gitBranch.loading"
+              option-label="ref"
+              option-value="ref"
+              use-chips
+              multiple
+              placeholder="default: repository's default branch"
+              class="mb-2"
+            >
+              <template #prepend>
+                <q-icon name="mdi-source-branch" />
+              </template>
+              <template v-slot:no-option>
+                <q-item>
+                  <q-item-section class="text-grey">
+                    No results
+                  </q-item-section>
+                </q-item>
+              </template>
+            </q-select>
+          </q-tab-panel>
+
+          <q-tab-panel name="tag">
+            <q-select
+              dense
+              :disable="!repositorySelected"
+              filled
+              v-model="formData.tags"
+              use-input
+              :clearable="true"
+              input-debounce="250"
+              label="Tags"
+              :options="gitTag.tags"
+              :loading="gitTag.loading"
+              option-label="ref"
+              option-value="ref"
+              use-chips
+              multiple
+              placeholder="default: repository's default branch"
+              class="mb-2"
+            >
+              <template #prepend>
+                <q-icon name="mdi-source-tag" />
+              </template>
+              <template v-slot:no-option>
+                <q-item>
+                  <q-item-section class="text-grey"> No tags </q-item-section>
+                </q-item>
+              </template>
+            </q-select>
+          </q-tab-panel>
+
+          <q-tab-panel name="contributor" class="p-0">
+            <ContributorSelectPanel
+              v-model:contributors="formData.contributors"
+              :repository="formData.repository"
+            />
+          </q-tab-panel>
+
+          <q-tab-panel name="collaborator">
+            <q-select
+              :disable="!repositorySelected"
+              filled
+              v-model="formData.collaborators"
+              use-input
+              :clearable="true"
+              input-debounce="250"
+              label="Contributors"
+              :options="repositoryCollaborator.collaborators"
+              :loading="repositoryCollaborator.loading"
+              option-label="login"
+              option-value="login"
+              use-chips
+              multiple
+              class="mb-2"
+            >
+              <template #prepend>
+                <q-icon name="mdi-account-multiple-outline" />
+              </template>
+              <template v-slot:no-option>
+                <q-item>
+                  <q-item-section class="text-grey">
+                    No collaborators
+                  </q-item-section>
+                </q-item>
+              </template>
+              <template v-slot:option="{ itemProps, opt }">
+                <q-item v-bind="itemProps">
+                  <q-item-section>
+                    <q-item-label class="ellipsis">{{
+                      opt.login
+                    }}</q-item-label>
+                  </q-item-section>
+                  <q-item-section avatar>
+                    <q-avatar>
+                      <img :src="opt.avatar_url" :alt="opt.login" />
+                    </q-avatar>
+                  </q-item-section>
+                </q-item>
+              </template>
+              <template
+                v-slot:selected-item="{ removeAtIndex, index, tabindex, opt }"
+              >
+                <q-chip
+                  removable
+                  dense
+                  @remove="removeAtIndex(index)"
+                  :tabindex="tabindex"
+                >
+                  <q-avatar color="secondary" text-color="white">
                     <img :src="opt.avatar_url" :alt="opt.login" />
                   </q-avatar>
-                </q-item-section>
-              </q-item>
-            </template>
-            <template
-              v-slot:selected-item="{ removeAtIndex, index, tabindex, opt }"
-            >
-              <q-chip
-                removable
-                dense
-                @remove="removeAtIndex(index)"
-                :tabindex="tabindex"
-              >
-                <q-avatar color="secondary" text-color="white">
-                  <img :src="opt.avatar_url" :alt="opt.login" />
-                </q-avatar>
-                <span>
-                  {{ opt.login }}
-                </span>
-              </q-chip>
-            </template>
-          </q-select>
-        </q-tab-panel>
-
-        <q-tab-panel name="collaborator">
-          <q-select
-            :disable="!repositorySelected"
-            filled
-            v-model="formData.collaborators"
-            use-input
-            :clearable="true"
-            input-debounce="250"
-            label="Contributors"
-            :options="repositoryCollaborator.collaborators"
-            :loading="repositoryCollaborator.loading"
-            option-label="login"
-            option-value="login"
-            use-chips
-            multiple
-            class="mb-2"
-          >
-            <template #prepend>
-              <q-icon name="mdi-account-multiple-outline" />
-            </template>
-            <template v-slot:no-option>
-              <q-item>
-                <q-item-section class="text-grey">
-                  No collaborators
-                </q-item-section>
-              </q-item>
-            </template>
-            <template v-slot:option="{ itemProps, opt }">
-              <q-item v-bind="itemProps">
-                <q-item-section>
-                  <q-item-label class="ellipsis">{{ opt.login }}</q-item-label>
-                </q-item-section>
-                <q-item-section avatar>
-                  <q-avatar>
-                    <img :src="opt.avatar_url" :alt="opt.login" />
-                  </q-avatar>
-                </q-item-section>
-              </q-item>
-            </template>
-            <template
-              v-slot:selected-item="{ removeAtIndex, index, tabindex, opt }"
-            >
-              <q-chip
-                removable
-                dense
-                @remove="removeAtIndex(index)"
-                :tabindex="tabindex"
-              >
-                <q-avatar color="secondary" text-color="white">
-                  <img :src="opt.avatar_url" :alt="opt.login" />
-                </q-avatar>
-                <span>
-                  {{ opt.login }}
-                </span>
-              </q-chip>
-            </template>
-          </q-select>
-        </q-tab-panel>
-      </q-tab-panels>
+                  <span>
+                    {{ opt.login }}
+                  </span>
+                </q-chip>
+              </template>
+            </q-select>
+          </q-tab-panel>
+        </q-tab-panels>
+      </template>
 
       <div class="sticky bottom-0">
         <q-btn
@@ -323,10 +272,19 @@
           :no-caps="true"
         >
           <template v-slot:loading>
-            <div class="flex flex-nowrap w-full p-1 gap-1">
+            <div class="flex flex-nowrap w-full p-1 gap-1 items-center">
               <q-spinner-hourglass />
+              Fetching
+              <q-avatar size="sm">
+                <img
+                  :src="
+                    formData.contributors[commits.fetchingPart.value].avatar_url
+                  "
+                  :alt="formData.contributors[commits.fetchingPart.value].login"
+                />
+              </q-avatar>
               <span class="truncate">
-                {{ commits.loadingText.value }}
+                {{ formData.contributors[commits.fetchingPart.value].login }}
               </span>
               <q-space />
               <span>{{ commits.percentage.value }}%</span>
@@ -349,7 +307,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, toRaw, watch } from 'vue';
+import { computed, reactive, ref, toRaw, toRef, watch } from 'vue';
 import {
   getGitReferences,
   getRepositoryCollaborators,
@@ -361,9 +319,8 @@ import { useRepositories } from './use-repositories';
 import { useCommitStore } from 'stores/commit-store';
 import { presetDateRange } from 'components/search-panel/models';
 import { storeToRefs } from 'pinia';
-import { useRepositoryContributors } from 'components/search-panel/use-repository-contributors';
-import { components } from '@octokit/openapi-types';
 import { QSelect } from 'quasar';
+import ContributorSelectPanel from 'components/search-panel/ContributorSelectPanel.vue';
 
 const commitsStore = useCommitStore();
 const { searchParams } = storeToRefs(commitsStore);
@@ -391,16 +348,6 @@ const gitTag = reactive({
   tags: [] as Awaited<ReturnType<typeof getGitReferences>>['data'],
   loading: false,
 });
-const repositoryContributor = useRepositoryContributors(
-  computed(() => formData.repository?.owner.login),
-  computed(() => formData.repository?.name)
-);
-// const repositoryContributor = reactive({
-//   contributors: [] as Awaited<
-//     ReturnType<typeof getRepositoryContributors>
-//   >['data'],
-//   loading: false,
-// });
 const repositoryCollaborator = reactive({
   collaborators: [] as Awaited<
     ReturnType<typeof getRepositoryCollaborators>
@@ -431,7 +378,7 @@ watchDebounced(
       //   gitTag.loading = false;
       //   break;
       case 'contributor':
-        repositoryContributor.fetch();
+        // repositoryContributor.fetch();
         break;
       case 'collaborator':
         repositoryCollaborator.loading = true;
@@ -481,55 +428,6 @@ async function handleCommitsFetch() {
 
 function handleDateRangeChange(value: { from: string; to: string }) {
   formData.dateRange = [value.from, value.to];
-}
-
-const repositoryContributorFilterOptions = ref<
-  Array<components['schemas']['contributor']>
->([]);
-function filterFn(val: string, doneFn: () => void, abort: () => void) {
-  if (val.length <= 0) {
-    repositoryContributorFilterOptions.value = repositoryContributor.data.value;
-  } else {
-    const needle = val.toLowerCase();
-    repositoryContributorFilterOptions.value =
-      repositoryContributor.data.value.filter(
-        (c) => (c.login ?? '').toLowerCase().indexOf(needle) > -1
-      );
-  }
-  doneFn();
-}
-
-async function onScroll({
-  to,
-  ref,
-}: {
-  /**
-   * Index of the list item that was scrolled into view (0 based)
-   */
-  index: number;
-  /**
-   * The index of the first list item that is rendered (0 based)
-   */
-  from: number;
-  /**
-   * The index of the last list item that is rendered (0 based)
-   */
-  to: number;
-  /**
-   * Direction of change
-   */
-  direction: 'increase' | 'decrease';
-  /**
-   * Vue reference to the QSelect
-   */
-  ref: QSelect;
-}) {
-  const lastIndex = repositoryContributorFilterOptions.value.length - 1;
-
-  if (repositoryContributor.loading.value !== true && to === lastIndex) {
-    repositoryContributor.next();
-    ref.refresh();
-  }
 }
 </script>
 

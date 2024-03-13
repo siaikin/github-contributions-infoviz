@@ -4,6 +4,8 @@ import type { PaginatingEndpoints } from '@octokit/plugin-paginate-rest/dist-typ
 import { MapFunction } from '@octokit/plugin-paginate-rest/dist-types/types';
 import { components } from '@octokit/openapi-types/types';
 import { isString } from 'lodash-es';
+import { parseLinkHeader } from 'src/http-interfaces/parse-link-header';
+import { until } from '@vueuse/core';
 
 export function useRepositoryContributors(
   owner: MaybeRefOrGetter<string | undefined>,
@@ -11,7 +13,9 @@ export function useRepositoryContributors(
 ) {
   const url = 'GET /repos/{owner}/{repo}/contributors' as const;
 
-  const data = ref<Array<components['schemas']['contributor']>>([]);
+  const total = ref(0);
+  const expectedCount = ref(0);
+  const remainedCount = ref(0);
 
   const paramsList = ref([]) as Ref<
     Array<
@@ -22,14 +26,13 @@ export function useRepositoryContributors(
       ]
     >
   >;
-  const page = ref(1);
-  const fetchContributors = () => {
+  const fetchContributors = async (expected: number) => {
     const ownerValue = toValue(owner);
     const repoValue = toValue(repo);
     if (!isString(ownerValue) || !isString(repoValue)) return;
 
-    const pageValue = toValue(page);
-
+    expectedCount.value = expected;
+    remainedCount.value = expected;
     paramsList.value = [
       [
         'contributors',
@@ -37,14 +40,11 @@ export function useRepositoryContributors(
         {
           owner: ownerValue,
           repo: repoValue,
-          page: pageValue,
         },
       ],
     ];
-  };
-  const nextPage = () => {
-    page.value++;
-    fetchContributors();
+
+    await until(result.loading).toBe(true);
   };
 
   const mapFn =
@@ -53,8 +53,16 @@ export function useRepositoryContributors(
       Array<components['schemas']['contributor']>
     > =>
     (response, done) => {
-      done();
-      data.value = data.value.concat(response.data);
+      const linkMap = parseLinkHeader(response.headers.link);
+      total.value = Math.max(
+        total.value,
+        Number.parseInt(linkMap?.last?.page ?? '0') *
+          Number.parseInt(linkMap?.last?.per_page ?? '0') || 0
+      );
+
+      remainedCount.value -= response.data.length;
+      if (remainedCount.value <= 0) done();
+
       return response.data;
     };
   const result = useOctokitPaginateMap<
@@ -64,12 +72,10 @@ export function useRepositoryContributors(
 
   return {
     ...result,
-    data,
-    fetch: () => {
-      page.value = 1;
-      data.value = [];
-      fetchContributors();
-    },
-    next: () => nextPage(),
+    data: computed(() =>
+      (result.data.value['contributors'] ?? []).slice(0, expectedCount.value)
+    ),
+    total,
+    fetch: (expected: number = Number.MAX_VALUE) => fetchContributors(expected),
   };
 }

@@ -5,6 +5,7 @@ import {
   getRepositoryCollaborators,
   getRepositoryContributors,
 } from 'src/http-interfaces';
+import { components } from '@octokit/openapi-types';
 
 const today = dayjs();
 
@@ -80,3 +81,10 @@ export interface CommitSearchParams {
   dateRange?: [string, string];
   tab?: 'branch' | 'contributor' | 'collaborator';
 }
+
+export interface ContributorSearchParams {
+  rankSize?: number;
+  tab?: 'rank' | 'select';
+}
+
+export type Contributor = components['schemas']['contributor'];
