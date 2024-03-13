@@ -12,6 +12,16 @@
         <!--        />-->
 
         <q-toolbar-title> Contributions Infoviz </q-toolbar-title>
+        <q-space />
+        <q-btn
+          flat
+          round
+          dense
+          icon="mdi-github"
+          href="https://github.com/siaikin/github-contributions-infoviz"
+          target="_blank"
+        >
+        </q-btn>
       </q-toolbar>
     </q-header>
 
