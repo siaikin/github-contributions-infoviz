@@ -19,7 +19,7 @@
           class="flex-auto pl-2 pr-2"
           v-model="currentTime"
           :min="0"
-          :max="timeline.length"
+          :max="timeline.length - 1"
         />
         <span>{{ playbackProgress }}</span>
       </div>
